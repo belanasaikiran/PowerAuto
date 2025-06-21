@@ -19,8 +19,11 @@
   },
   "homepage": "https://github.com/belanasaikiran/PowerAuto#readme",
   "dependencies": {
+    "csv-parse": "^5.6.0",
     "express": "^5.1.0",
+    "multer": "^2.0.1",
     "nodemon": "^3.1.10",
+    "pg": "^8.16.2",
     "socket.io": "^4.8.1"
   }
 }
