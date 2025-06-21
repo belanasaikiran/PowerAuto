@@ -1,6 +1,8 @@
 # Database Setup for File Upload Feature
 
-## 1. Migration SQL for `files` Table
+## 1. Migration SQL for Default `files` Table
+
+To create the default `files` table in your PostgreSQL database, run the following SQL:
 
 ```sql
 CREATE TABLE IF NOT EXISTS files (
@@ -11,8 +13,9 @@ CREATE TABLE IF NOT EXISTS files (
 );
 ```
 
-- `file_name`: Will be used as the unique table name for each CSV upload.
+- `file_name`: Used as the unique table name for each CSV upload.
 - `file_data`: Stores the raw CSV file as binary data.
+- `uploaded_at`: Timestamp of when the file was uploaded.
 
 ---
 
