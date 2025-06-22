@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 require("dotenv").config();
 const cors = require("cors");
@@ -6,6 +7,7 @@ const { Pool } = require("pg");
 const { parse } = require("csv-parse/sync");
 const path = require("path");
 const multer = require("multer");
+const LlamaAPIClient = require("llama-api-client");
 
 const pool = new Pool({
   user: "power",
@@ -91,23 +93,136 @@ app.post("/api/userprompt", (req, res) => {
 app.post("/api/upload-csv-prompt", upload.single("file"), async (req, res) => {
   const prompt = req.body.prompt;
   console.log("Received /api/upload-csv-prompt request");
-  if (req.file) {
-    console.log("File received:");
-    console.log("  originalname:", req.file.originalname);
-    console.log("  mimetype:", req.file.mimetype);
-    console.log("  size:", req.file.size);
-  } else {
+  if (!req.file) {
     console.log("No file received in request.");
     return res.status(400).json({ error: "No file uploaded" });
   }
-  if (prompt) {
-    console.log("Prompt received:", prompt);
-  } else {
+  console.log("File received:");
+  console.log("  originalname:", req.file.originalname);
+  console.log("  mimetype:", req.file.mimetype);
+  console.log("  size:", req.file.size);
+
+  if (!prompt) {
     console.log("No prompt received.");
+    return res.status(400).json({ error: "No prompt provided" });
   }
+  console.log("Prompt received:", prompt);
+
+  // Summarize using Llama with the file and prompt
+  const summary = await summarizeWithLlamaFile(
+    req.file.buffer,
+    req.file.originalname,
+    prompt,
+    true,
+  );
+  console.log("Summary from Llama:", summary);
+
+  // Save the file to the DB after summarization
   const result = await saveCsvToDb(req.file.buffer, req.file.originalname);
   console.log("Result from saveCsvToDb:", result);
-  res.json({ ...result, prompt });
+
+  res.json({ ...result, prompt, summary });
+});
+
+/**
+ * Summarize a file using Meta Llama 4 API via llama-api-client.
+ * @param {Buffer} fileBuffer - The file buffer to summarize.
+ * @param {string} fileName - The file name.
+ * @returns {Promise<string>} - The summary.
+ */
+async function summarizeWithLlamaFile(
+  fileBuffer,
+  fileName,
+  userPrompt,
+  chartType,
+) {
+  if (!process.env.LLAMA_API_KEY) {
+    throw new Error("LLAMA_API_KEY is not set in environment variables");
+  }
+  const client = new LlamaAPIClient({
+    apiKey: process.env.LLAMA_API_KEY,
+  });
+
+  const csvContent = fileBuffer.toString("utf-8");
+  let prompt = `The following is the content of a CSV file named "${fileName}":\n${csvContent}\n\n${userPrompt}\n\n`;
+
+  if (chartType) {
+    prompt += `
+The user wants to visualize the data as a chart using react-chartjs-2.
+Please output only a valid JSON object with the following structure:
+
+{
+  "labels": [...],
+  "datasets": [
+    {
+      "label": "...",
+      "data": [...],
+      "backgroundColor": [...]
+    }
+  ]
+}
+
+Do not include any explanation, markdown, or extra text. Only output the JSON object.
+`.trim();
+  } else {
+    prompt += `
+Summarize this CSV file in clear, concise English.
+Structure:
+Paragraph 1 — Lead and context (what is this data about)
+Paragraph 2 — Key facts, trends, or outliers
+Paragraph 3 — Broader implications or closing information
+
+Do not include markdown, headings, or explanations — just return the plain English summary.
+`.trim();
+  }
+
+  try {
+    const res = await client.chat.completions.create({
+      model: "Llama-4-Maverick-17B-128E-Instruct-FP8",
+      messages: [{ role: "user", content: prompt }],
+      max_completion_tokens: 512,
+      temperature: 0.3,
+    });
+
+    return (
+      res.completion_message?.content?.text?.trim() || "Summary not found."
+    );
+  } catch (err) {
+    console.error("LLaMA summarization error:", err.message);
+    return "Summary generation failed. Please try again.";
+  }
+}
+
+/**
+ * API: Summarize the latest uploaded file in the database using Meta Llama 4, sending the file as input.
+ */
+app.get("/api/summarize-latest-file", async (req, res) => {
+  try {
+    // Get the latest file from the files table
+    const fileResult = await pool.query(
+      "SELECT file_name, file_data FROM files ORDER BY uploaded_at DESC LIMIT 1",
+    );
+    if (!fileResult.rows.length) {
+      return res.status(404).json({ error: "No files found in database." });
+    }
+    const { file_name, file_data } = fileResult.rows[0];
+
+    // Get prompt and chartType from query parameters (optional)
+    const prompt = req.query.prompt || "";
+    const chartType = req.query.chartType || "";
+
+    // Summarize using the file as input and the prompt/chartType
+    const summary = await summarizeWithLlamaFile(
+      file_data,
+      file_name,
+      prompt,
+      chartType,
+    );
+    res.json({ file: file_name, summary, prompt, chartType });
+  } catch (err) {
+    console.error("Error summarizing latest file:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const PORT = process.env.PORT || 4000;
