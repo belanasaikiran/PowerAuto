@@ -1,0 +1,138 @@
+{
+  "dashboardTitle": "Sales Performance Dashboard",
+  "layout": {
+    "cols": 12,
+    "rows": "auto"
+  },
+  "kpis": [
+    {
+      "id": "total-revenue",
+      "type": "GaugeChart",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": 3,
+        "height": 3
+      },
+      "props": {
+        "value": 85,
+        "min": 0,
+        "max": 100,
+        "title": "Revenue Target",
+        "unit": "%",
+        "editable": false
+      }
+    },
+    {
+      "id": "customer-satisfaction",
+      "type": "GaugeChart", 
+      "position": {
+        "x": 3,
+        "y": 0,
+        "width": 3,
+        "height": 3
+      },
+      "props": {
+        "value": 92,
+        "min": 0,
+        "max": 100,
+        "title": "Customer Satisfaction",
+        "unit": "%",
+        "editable": false
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "monthly-sales",
+      "type": "BarChart",
+      "position": {
+        "x": 0,
+        "y": 3,
+        "width": 6,
+        "height": 4
+      },
+      "props": {
+        "data": [
+          { "label": "Jan", "value": 45000 },
+          { "label": "Feb", "value": 52000 },
+          { "label": "Mar", "value": 48000 },
+          { "label": "Apr", "value": 61000 },
+          { "label": "May", "value": 55000 },
+          { "label": "Jun", "value": 67000 }
+        ],
+        "title": "Monthly Sales",
+        "colors": ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD"],
+        "editable": true
+      }
+    },
+    {
+      "id": "sales-by-region",
+      "type": "DonutChart",
+      "position": {
+        "x": 6,
+        "y": 3,
+        "width": 6,
+        "height": 4
+      },
+      "props": {
+        "data": [
+          { "label": "North", "value": 35 },
+          { "label": "South", "value": 28 },
+          { "label": "East", "value": 22 },
+          { "label": "West", "value": 15 }
+        ],
+        "title": "Sales by Region",
+        "colors": ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"],
+        "editable": true
+      }
+    },
+    {
+      "id": "quarterly-trends",
+      "type": "AreaChart",
+      "position": {
+        "x": 0,
+        "y": 7,
+        "width": 8,
+        "height": 4
+      },
+      "props": {
+        "data": [
+          { "x": "Q1", "y": 145000, "series": "Revenue" },
+          { "x": "Q2", "y": 168000, "series": "Revenue" },
+          { "x": "Q3", "y": 155000, "series": "Revenue" },
+          { "x": "Q4", "y": 183000, "series": "Revenue" },
+          { "x": "Q1", "y": 125000, "series": "Profit" },
+          { "x": "Q2", "y": 142000, "series": "Profit" },
+          { "x": "Q3", "y": 138000, "series": "Profit" },
+          { "x": "Q4", "y": 161000, "series": "Profit" }
+        ],
+        "title": "Quarterly Trends",
+        "colors": ["#4CAF50", "#2196F3"],
+        "editable": true
+      }
+    },
+    {
+      "id": "sales-funnel",
+      "type": "FunnelChart",
+      "position": {
+        "x": 8,
+        "y": 7,
+        "width": 4,
+        "height": 4
+      },
+      "props": {
+        "data": [
+          { "stage": "Leads", "value": 1000 },
+          { "stage": "Qualified", "value": 750 },
+          { "stage": "Proposals", "value": 400 },
+          { "stage": "Negotiations", "value": 200 },
+          { "stage": "Closed", "value": 150 }
+        ],
+        "title": "Sales Funnel",
+        "colors": ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"],
+        "editable": true
+      }
+    }
+  ]
+} 
