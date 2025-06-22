@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/belanasaikiran/PowerAuto#readme",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.10.0",
     "cors": "^2.8.5",
     "csv-parse": "^5.6.0",
@@ -28,6 +29,7 @@
     "multer": "^2.0.1",
     "nodemon": "^3.1.10",
     "openai": "^4.21.0",
-    "pg": "^8.16.2"
+    "pg": "^8.16.2",
+    "ws": "^8.18.2"
   }
 }
