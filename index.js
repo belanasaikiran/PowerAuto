@@ -1,4 +1,5 @@
 const express = require("express");
+require("dotenv").config();
 const cors = require("cors");
 const app = express();
 const { Pool } = require("pg");
@@ -110,6 +111,55 @@ app.post("/api/upload-csv-prompt", upload.single("file"), async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4000;
+
+const llama = require("llama-api-client")({ 
+  apiKey: process.env.LLAMA_API_KEY });
+
+app.post("/api/ai-agent", async (req, res) => {
+  const { prompt, table } = req.body;
+  if (!prompt || !table) {
+    return res.status(400).json({ error: "Prompt and table are required." });
+  }
+
+  try {
+    // Get table columns for context
+    const colRes = await pool.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = $1`,
+      [table]
+    );
+    const columns = colRes.rows.map(r => r.column_name).join(", ");
+
+    // Compose the instruction for Llama
+    const llamaPrompt = `You are an expert SQL assistant. The table "${table}" has columns: ${columns}. Write a SQL SELECT query for the following request: ${prompt}. Only return the SQL statement.`;
+
+    // Call the Llama API using the client
+    const completion = await llama.createCompletion({
+      model: "Llama-4-Maverick-17B-128E-Instruct-FP8", // Use the correct model name for your API
+      prompt: llamaPrompt,
+      max_tokens: 128,
+      temperature: 0.2
+    });
+
+    let sql = completion.choices[0].text.trim();
+
+    // Optionally, extract only the SQL statement
+    const match = sql.match(/SELECT[\s\S]*?;/i);
+    if (match) sql = match[0];
+
+    // Run the generated SQL query
+    const result = await pool.query(sql);
+    res.json({ sql, rows: result.rows });
+  } catch (err) {
+    console.error("AI agent error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
+
+
+
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
