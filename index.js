@@ -572,15 +572,21 @@ Respond with only the chart type in lowercase, or "none".
         ?.trim()
         .replace(/["'.]/g, "");
       console.log("Extracted chart type from prompt:", chartType);
+      
+      // If no chart type specified, default to "bar"
+      if (!chartType || chartType === "none") {
+        chartType = "bar";
+        console.log("No chart type specified, defaulting to bar chart");
+      }
     } catch (err) {
       console.error("Error extracting chart type from prompt:", err);
-      chartType = "";
+      chartType = "bar"; // Default to bar chart on error
     }
 
     // 2. Compose the Llama prompt
     let llamaPrompt = `The following is the content of a CSV file from the table "${table}":\n${csvContent}\n\n${prompt}\n\n`;
     let wantQuestions = false;
-    if (chartType && chartType !== "none") {
+    if (chartType) {
       wantQuestions = true;
       llamaPrompt += `
 The user wants to visualize the data as a ${chartType} using react-chartjs-2.
@@ -723,17 +729,23 @@ Respond with only the chart type in lowercase, or "none".
       ?.trim()
       .replace(/["'.]/g, "");
     console.log("Extracted chart type from prompt:", chartType);
+    
+    // If no chart type specified, default to "bar"
+    if (!chartType || chartType === "none") {
+      chartType = "bar";
+      console.log("No chart type specified, defaulting to bar chart");
+    }
   } catch (err) {
     console.error("Error extracting chart type from prompt:", err);
-    chartType = "";
+    chartType = "bar"; // Default to bar chart on error
   }
 
-  // Summarize using Llama with the file and prompt, and chartType if found
+  // Summarize using Llama with the file and prompt, always passing the chartType
   const summary = await summarizeWithLlamaFile(
     req.file.buffer,
     req.file.originalname,
     prompt,
-    chartType !== "none" ? chartType : "",
+    chartType, // chartType is always set (either user-specified or "bar" default)
   );
   console.log("Summary from Llama:", summary);
 
